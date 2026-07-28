@@ -39,6 +39,7 @@ func TestConfigDefault(t *testing.T) {
 	assert.NoError(t, err)
 
 	p, err := New(testConfig, logptest.NewTestingLogger(t, ""))
+	require.NoError(t, err)
 
 	newEvent, err := p.Run(event)
 	assert.NoError(t, err)
@@ -61,6 +62,7 @@ func TestOverwriteFalse(t *testing.T) {
 	require.NoError(t, err)
 
 	p, err := New(testConfig, logptest.NewTestingLogger(t, ""))
+	require.NoError(t, err)
 
 	newEvent, err := p.Run(event)
 	require.NoError(t, err)
@@ -79,6 +81,7 @@ func TestOverwriteTrue(t *testing.T) {
 	require.NoError(t, err)
 
 	p, err := New(testConfig, logptest.NewTestingLogger(t, ""))
+	require.NoError(t, err)
 
 	newEvent, err := p.Run(event)
 	require.NoError(t, err)
@@ -142,6 +145,48 @@ func TestConfigGeoEnabled(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Len(t, eventGeoField, len(config))
+}
+
+func TestHostnameOverride(t *testing.T) {
+	beat.SetHostnameOverride("override-host")
+	t.Cleanup(func() { beat.SetHostnameOverride("") })
+
+	testConfig, err := cfg.NewConfigFrom(map[string]any{})
+	require.NoError(t, err)
+
+	p, err := New(testConfig, logptest.NewTestingLogger(t, ""))
+	require.NoError(t, err)
+
+	newEvent, err := p.Run(&beat.Event{Fields: mapstr.M{}})
+	require.NoError(t, err)
+
+	v, err := newEvent.GetValue("observer.hostname")
+	require.NoError(t, err)
+	assert.Equal(t, "override-host", v)
+}
+
+func TestHostnameOverrideWinsOverCachedData(t *testing.T) {
+	// Populate cache with no override set.
+	testConfig, err := cfg.NewConfigFrom(map[string]any{"cache.ttl": "1h"})
+	require.NoError(t, err)
+
+	p, err := New(testConfig, logptest.NewTestingLogger(t, ""))
+	require.NoError(t, err)
+	_, _ = p.Run(&beat.Event{Fields: mapstr.M{}})
+
+	// Now set the override and force cache expiry.
+	beat.SetHostnameOverride("override-host")
+	t.Cleanup(func() { beat.SetHostnameOverride("") })
+	typedProc, ok := p.(*observerMetadata)
+	require.True(t, ok)
+	typedProc.lastUpdate.Time = time.Time{}
+
+	newEvent, err := p.Run(&beat.Event{Fields: mapstr.M{}})
+	require.NoError(t, err)
+
+	v, err := newEvent.GetValue("observer.hostname")
+	require.NoError(t, err)
+	assert.Equal(t, "override-host", v)
 }
 
 func TestConfigGeoDisabled(t *testing.T) {

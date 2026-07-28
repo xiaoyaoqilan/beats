@@ -196,7 +196,10 @@ func (p *addHostMetadata) fetchData(useFQDN bool) (mapstr.M, error) {
 
 	hInfo := h.Info()
 	hostname := hInfo.Hostname
-	if useFQDN {
+
+	if override := beat.GetHostnameOverride(); override != "" {
+		hostname = override
+	} else if useFQDN {
 		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 		defer cancel()
 

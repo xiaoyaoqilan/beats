@@ -172,6 +172,8 @@ type certReloadConfig struct {
 	Reload           cfgfile.Reload `config:"restart_on_cert_change" yaml:"restart_on_cert_change"`
 }
 
+var flagHostname = flag.String("hostname", "", "Override the detected hostname")
+
 func (c certReloadConfig) Validate() error {
 	if c.Reload.Period < time.Second {
 		return errors.New("'restart_on_cert_change.period' must be equal or greater than 1s")
@@ -246,7 +248,6 @@ func NewBeat(name, indexPrefix, v string, elasticLicensed bool, initFuncs []func
 	if err != nil {
 		return nil, err
 	}
-
 	fields, err := asset.GetFields(name)
 	if err != nil {
 		return nil, err
@@ -801,6 +802,11 @@ func (b *Beat) Setup(settings Settings, bt beat.Creator, setup SetupSettings) er
 // the Beat.
 func (b *Beat) handleFlags() error {
 	flag.Parse()
+	if *flagHostname != "" {
+		b.Info.Hostname = *flagHostname
+		b.Info.Name = *flagHostname
+		beat.SetHostnameOverride(*flagHostname)
+	}
 	return cfgfile.HandleFlags()
 }
 

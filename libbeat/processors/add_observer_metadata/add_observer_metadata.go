@@ -127,9 +127,13 @@ func (p *observerMetadata) loadData() error {
 	}
 
 	hostInfo := h.Info()
+	hostname := hostInfo.Hostname
+	if override := beat.GetHostnameOverride(); override != "" {
+		hostname = override
+	}
 	data := mapstr.M{
 		"observer": mapstr.M{
-			"hostname": hostInfo.Hostname,
+			"hostname": hostname,
 		},
 	}
 	if p.config.NetInfoEnabled {

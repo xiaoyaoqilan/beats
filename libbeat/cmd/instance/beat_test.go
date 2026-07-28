@@ -70,6 +70,7 @@ func TestNewInstance(t *testing.T) {
 	assert.Equal(t, "testbeat", b.Info.IndexPrefix)
 }
 
+
 func TestNewInstanceUUID(t *testing.T) {
 	b, err := NewBeat("testbeat", "", "0.9", false, nil)
 	if err != nil {

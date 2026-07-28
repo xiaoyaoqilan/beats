@@ -27,6 +27,17 @@ import (
 	"github.com/elastic/elastic-agent-libs/paths"
 )
 
+// hostnameOverride holds b.Info.Name when it was explicitly configured, making it
+// accessible to processors that cannot receive beat.Info.
+var hostnameOverride string
+
+// SetHostnameOverride sets the hostname used by processors instead of OS detection.
+// Pass "" to clear.
+func SetHostnameOverride(h string) { hostnameOverride = h }
+
+// GetHostnameOverride returns the active hostname override, or "" if none is set.
+func GetHostnameOverride() string { return hostnameOverride }
+
 // Info stores a beats instance meta data.
 type Info struct {
 	Beat             string    // The actual beat's name
@@ -54,6 +65,5 @@ func (i Info) FQDNAwareHostname(useFQDN bool) string {
 	if useFQDN {
 		return i.FQDN
 	}
-
 	return i.Hostname
 }
