@@ -102,6 +102,7 @@ func TestConfigNetInfoDisabled(t *testing.T) {
 	assert.NoError(t, err)
 
 	p, err := New(testConfig, logptest.NewTestingLogger(t, ""))
+	require.NoError(t, err)
 
 	newEvent, err := p.Run(event)
 	assert.NoError(t, err)
